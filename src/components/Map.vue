@@ -52,7 +52,7 @@
             v-model="numberOfCustomers_slider"
             class="align-center"
             max="100"
-            min="5"
+            min="1"
             hide-details
             :label="'Clientes: ' + numberOfCustomers_slider"
           >
@@ -61,7 +61,7 @@
             v-model="numberOfLockers_slider"
             class="align-center"
             max="20"
-            min="2"
+            min="1"
             hide-details
             :label="'Lockers: ' + numberOfLockers_slider"
           >
@@ -70,31 +70,11 @@
             v-model="numberOfDays_slider"
             class="align-center"
             max="10"
-            min="2"
+            min="1"
             hide-details
             :label="'Dias: ' + numberOfDays_slider"
           >
           </v-slider>
-          <!--<v-range-slider
-            class="align-center"
-            v-model="demanda"
-            max="100"
-            min="10"
-            hide-details
-            :label="`Demanda Cliente entre: ${demanda[0]} e ${demanda[1]}`"
-          >
-          </v-range-slider>
-          <v-range-slider
-            class="align-center"
-            v-model="capacidade"
-            max="1000"
-            min="10"
-            hide-details
-            :label="
-              `Capacidade do Locker entre: ${capacidade[0]} e ${capacidade[1]}`
-            "
-          >
-          </v-range-slider>-->
           <v-btn depressed small color="primary" v-on:click="drawRandomPoints"
             >Gerar Pontos Aleatórios</v-btn
           >
@@ -102,12 +82,6 @@
       </v-row>
     </span>
     <div style="height: 100%;">
-      <!--<v-btn depressed small color="primary" v-on:click="buildDistance"
-        >Calcular Distâncias</v-btn
-      >
-      <p>{{ distance }}</p>
-      <p>{{ customers }}</p>
-      <p>{{ lockers }}</p>-->
       <v-row class="text-center">
         <v-col cols="10" offset="1">
           <v-card
@@ -173,6 +147,8 @@
                 :icon="iconLocker()"
                 v-on:click="lockerClick(locker)"
               ></l-marker>
+              <l-marker :lat-lng.sync="deposito.position" :draggable="true">
+              </l-marker>
               <l-polygon
                 :visible="showPolygon"
                 :lat-lngs="pointsOfPolygon"
@@ -183,6 +159,7 @@
       </v-row>
       <v-row>
         <v-col cols="10" offset="1">
+          <p>{{ deposito }}</p>
           <p>{{ customers }}</p>
           <p>{{ lockers }}</p>
           <p>{{ distance }}</p>
@@ -214,19 +191,19 @@ export default {
       pointsOfPolygon: [],
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       zoom: 13,
-      center: [-20.752327, -42.876433500000005],
+      center: [-20.752327, -42.876433],
       attribution:
         '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap </a> | <a href="https://www.flaticon.com/free-icon/pin_2444532">Pixelmeetup</a> from <a href="https://www.flaticon.com/"> www.flaticon.com</a> contributors',
       numberOfCustomers: 0,
       numberOfLockers: 0,
       numberOfDays: 0,
-      numberOfCustomers_slider: 5,
-      numberOfLockers_slider: 2,
-      numberOfDays_slider: 2,
+      numberOfCustomers_slider: 1,
+      numberOfLockers_slider: 1,
+      numberOfDays_slider: 1,
       // eslint-disable-next-line
-      customers: [],//[ { "id": 1, "latitude": -20.790452, "longitude": -42.856987, "day": 1}, { "id": 3, "latitude": -20.74617, "longitude": -42.84611, "day": 1}, { "id": 5, "latitude": -20.723942, "longitude": -42.896334, "day": 1 }, { "id": 6, "latitude": -20.736425, "longitude": -42.901754, "day": 1 }, { "id": 7, "latitude": -20.729555, "longitude": -42.853884, "day": 1 } ],
+      customers: [], //[ { "id": 1, "latitude": -20.790452, "longitude": -42.856987, "day": 1}, { "id": 3, "latitude": -20.74617, "longitude": -42.84611, "day": 1}, { "id": 5, "latitude": -20.723942, "longitude": -42.896334, "day": 1 }, { "id": 6, "latitude": -20.736425, "longitude": -42.901754, "day": 1 }, { "id": 7, "latitude": -20.729555, "longitude": -42.853884, "day": 1 } ],
       // eslint-disable-next-line
-      lockers: [],//[ { "id": 2, "latitude": -20.745406, "longitude": -42.866753, "day": 1 }, { "id": 4, "latitude": -20.738825, "longitude": -42.856516, "day": 1 } ],
+      lockers: [], //[ { "id": 2, "latitude": -20.745406, "longitude": -42.866753, "day": 1 }, { "id": 4, "latitude": -20.738825, "longitude": -42.856516, "day": 1 } ],
       genId: 1,
       showPolygon: false,
       showPanel: true,
@@ -236,9 +213,10 @@ export default {
       rateLimit: 1500,
       lastRequest: new Date(),
       processingClientes: false,
-      processingLockers: false
-      //demanda: [10, 100],
-      //capacidade: [10, 1000]
+      processingLockers: false,
+      deposito: {
+        position: { lat: -20.752327, lng: -42.876433 }
+      }
     };
   },
   created() {
@@ -291,8 +269,8 @@ export default {
             "Content-Type": "application/json"
           },
           params: {
-            start: `${longitude.toFixed(6)},${latitude.toFixed(6)}`,
-            end: `${longitude.toFixed(6)},${latitude.toFixed(6)}`
+            start: `${longitude},${latitude}`,
+            end: `${longitude},${latitude}`
           }
         })
         .then(() => [latitude, longitude]);
@@ -306,7 +284,7 @@ export default {
           return this.createCoordenada();
         });
     },
-    createVertice(conjunto, _day) {
+    createCustomer(conjunto, _day) {
       return this.createCoordenada()
         .then(latlng => {
           return (
@@ -321,6 +299,21 @@ export default {
         .catch(err => {
           console.log(err);
         });
+    },    
+    createLocker(conjunto) {
+      return this.createCoordenada()
+        .then(latlng => {
+          return (
+            conjunto.push({
+              id: this.genId++,
+              latitude: latlng[0],
+              longitude: latlng[1]
+            }) - 1
+          );
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
     async createInstance() {
       this.genId = 1;
@@ -329,19 +322,14 @@ export default {
       this.processingClientes = true;
       for (let j = 1; j <= this.numberOfDays; j++)
         for (let i = 0; i < this.numberOfCustomers; i++)
-          await this.createVertice(this.customers, j)/*.then(
-            index =>
-              (this.customers[index].demanda =
-                Math.random() * (this.demanda[1] - this.demanda[0]) +
-                this.demanda[0])
-          );*/
+          await this.createCustomer(this.customers, j);
 
       this.processingClientes = false;
 
       this.processingLockers = true;
       this.lockers = [];
       for (let i = 0; i < this.numberOfLockers; i++)
-        await this.createVertice(this.lockers, 1);
+        await this.createLocker(this.lockers);
       this.processingLockers = false;
     },
     calcMinMax() {
@@ -397,45 +385,34 @@ export default {
             "Content-Type": "application/json"
           },
           params: {
-            start: `${points[i].longitude.toFixed(6)},${points[
-              i
-            ].latitude.toFixed(6)}`,
-            end: `${points[j].longitude.toFixed(6)},${points[
-              j
-            ].latitude.toFixed(6)}`
+            start: `${points[i].longitude},${points[i].latitude}`,
+            end: `${points[j].longitude},${points[j].latitude}`
           }
         })
-        .then(val => [
-          val.data.features[0].properties.segments[0].distance,
-          points,
-          i,
-          j
-        ])
-        .catch(err => console.log(err));
+        .then(val => val.data.features[0].properties.segments[0].distance)
+        .catch(err => {
+          console.log(err);
+          return this.getDistanceAtoB(points, i, j);
+        });
     },
-    getDistance(points, distance, i, j) {
-      this.getDistanceAtoB(points, i, j, points.length)
-        .then(([distanceAtoB, points, i, j]) => {
-          distance[i][j] = distanceAtoB;
-          j++;
-          if (j === i) j++;
-          if (j >= points.length) {
-            j = 0;
-            i++;
-          }
-          if (j < points.length) {
-            this.getDistance(points, distance, i, j);
-          }
-        })
-        .catch(err => console.log(err));
-    },
-    buildDistance() {
-      let points = this.customers;
-      points.concat(this.lockers);
+    async buildDistance() {
+      let points = [
+        {
+          id: 0,
+          latitude: this.deposito.position.lat,
+          longitude: this.deposito.position.lng
+        }
+      ];
+      points = points.concat(this.customers);
+      points = points.concat(this.lockers);
       this.distance = Array(points.length)
         .fill()
         .map(() => Array(points.length).fill(0));
-      this.getDistance(points, this.distance, 0, 1);
+      for (let i = 0; i < points.length; i++)
+        for (let j = 0; j < points.length; j++)
+          await this.getDistanceAtoB(points, i, j).then(
+            distance => (this.distance[i][j] = distance || 0)
+          );
     },
     customerClick(customer) {
       alert(
@@ -444,7 +421,7 @@ export default {
     },
     lockerClick(locker) {
       alert(
-        `Locker\nID: ${locker.id}\nLatitude: ${locker.latitude} \nLongitude: ${locker.longitude} \nDia: ${locker.day}`
+        `Locker\nID: ${locker.id}\nLatitude: ${locker.latitude} \nLongitude: ${locker.longitude}`
       );
     }
   }
