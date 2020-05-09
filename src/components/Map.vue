@@ -75,6 +75,26 @@
             :label="'Dias: ' + numberOfDays_slider"
           >
           </v-slider>
+          <!--<v-range-slider
+            class="align-center"
+            v-model="demanda"
+            max="100"
+            min="10"
+            hide-details
+            :label="`Demanda Cliente entre: ${demanda[0]} e ${demanda[1]}`"
+          >
+          </v-range-slider>
+          <v-range-slider
+            class="align-center"
+            v-model="capacidade"
+            max="1000"
+            min="10"
+            hide-details
+            :label="
+              `Capacidade do Locker entre: ${capacidade[0]} e ${capacidade[1]}`
+            "
+          >
+          </v-range-slider>-->
           <v-btn depressed small color="primary" v-on:click="drawRandomPoints"
             >Gerar Pontos Aleatórios</v-btn
           >
@@ -104,11 +124,11 @@
                     width="2"
                   ></v-progress-circular>
                 </span>
-                Customers:
+                Clientes:
                 {{
-                  customers.length === numberOfCustomers
-                    ? numberOfCustomers
-                    : `${customers.length}/${numberOfCustomers}`
+                  customers.length === numberOfCustomers * numberOfDays
+                    ? customers.length
+                    : `${customers.length}/${numberOfCustomers * numberOfDays}`
                 }}
               </p>
               <p>
@@ -197,16 +217,16 @@ export default {
       center: [-20.752327, -42.876433500000005],
       attribution:
         '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap </a> | <a href="https://www.flaticon.com/free-icon/pin_2444532">Pixelmeetup</a> from <a href="https://www.flaticon.com/"> www.flaticon.com</a> contributors',
-      numberOfCustomers: 5,
-      numberOfLockers: 2,
-      numberOfDays: 2,
-      numberOfCustomers_slider: this.numberOfCustomers,
-      numberOfLockers_slider: this.numberOfLockers,
-      numberOfDays_slider: this.numberOfDays,
+      numberOfCustomers: 0,
+      numberOfLockers: 0,
+      numberOfDays: 0,
+      numberOfCustomers_slider: 5,
+      numberOfLockers_slider: 2,
+      numberOfDays_slider: 2,
       // eslint-disable-next-line
-      customers: [ { "id": 1, "latitude": -20.790452, "longitude": -42.856987, "day": 1}, { "id": 3, "latitude": -20.74617, "longitude": -42.84611, "day": 1}, { "id": 5, "latitude": -20.723942, "longitude": -42.896334, "day": 1 }, { "id": 6, "latitude": -20.736425, "longitude": -42.901754, "day": 1 }, { "id": 7, "latitude": -20.729555, "longitude": -42.853884, "day": 1 } ],
+      customers: [],//[ { "id": 1, "latitude": -20.790452, "longitude": -42.856987, "day": 1}, { "id": 3, "latitude": -20.74617, "longitude": -42.84611, "day": 1}, { "id": 5, "latitude": -20.723942, "longitude": -42.896334, "day": 1 }, { "id": 6, "latitude": -20.736425, "longitude": -42.901754, "day": 1 }, { "id": 7, "latitude": -20.729555, "longitude": -42.853884, "day": 1 } ],
       // eslint-disable-next-line
-      lockers: [ { "id": 2, "latitude": -20.745406, "longitude": -42.866753, "day": 1 }, { "id": 4, "latitude": -20.738825, "longitude": -42.856516, "day": 1 } ],
+      lockers: [],//[ { "id": 2, "latitude": -20.745406, "longitude": -42.866753, "day": 1 }, { "id": 4, "latitude": -20.738825, "longitude": -42.856516, "day": 1 } ],
       genId: 1,
       showPolygon: false,
       showPanel: true,
@@ -217,6 +237,8 @@ export default {
       lastRequest: new Date(),
       processingClientes: false,
       processingLockers: false
+      //demanda: [10, 100],
+      //capacidade: [10, 1000]
     };
   },
   created() {
@@ -278,37 +300,49 @@ export default {
     createCoordenada() {
       const lng = this.randomLng();
       const lat = this.randomLat();
-      return this.validatePoint(lat, lng);
+      return this.validatePoint(lat, lng)
+        .then(latlng => latlng)
+        .catch(() => {
+          return this.createCoordenada();
+        });
     },
-    createVertice(n, conjunto, type, _day) {
-      if (type === 1) this.processingClientes = true;
-      else this.processingLockers = true;
-      this.createCoordenada()
+    createVertice(conjunto, _day) {
+      return this.createCoordenada()
         .then(latlng => {
-          conjunto.push({
-            id: this.genId++,
-            latitude: latlng[0],
-            longitude: latlng[1],
-            day: _day
-          });
-          if (conjunto.length < n) {
-            this.createVertice(n, conjunto, type, _day);
-          } else {
-            if (type === 1) this.processingClientes = false;
-            else this.processingLockers = false;
-          }
+          return (
+            conjunto.push({
+              id: this.genId++,
+              latitude: latlng[0],
+              longitude: latlng[1],
+              day: _day
+            }) - 1
+          );
         })
         .catch(err => {
-          this.createVertice(n, conjunto, type, _day);
           console.log(err);
         });
     },
-    createInstance() {
+    async createInstance() {
       this.genId = 1;
       this.customers = [];
-      this.createVertice(this.numberOfCustomers, this.customers, 1, 1);
+
+      this.processingClientes = true;
+      for (let j = 1; j <= this.numberOfDays; j++)
+        for (let i = 0; i < this.numberOfCustomers; i++)
+          await this.createVertice(this.customers, j)/*.then(
+            index =>
+              (this.customers[index].demanda =
+                Math.random() * (this.demanda[1] - this.demanda[0]) +
+                this.demanda[0])
+          );*/
+
+      this.processingClientes = false;
+
+      this.processingLockers = true;
       this.lockers = [];
-      this.createVertice(this.numberOfLockers, this.lockers, 2, 1);
+      for (let i = 0; i < this.numberOfLockers; i++)
+        await this.createVertice(this.lockers, 1);
+      this.processingLockers = false;
     },
     calcMinMax() {
       this.minLong = this.pointsOfPolygon[0][0];
@@ -331,6 +365,7 @@ export default {
     drawRandomPoints() {
       this.numberOfCustomers = this.numberOfCustomers_slider;
       this.numberOfLockers = this.numberOfLockers_slider;
+      this.numberOfDays = this.numberOfDays_slider;
       this.centerMap();
       this.createInstance();
     },
