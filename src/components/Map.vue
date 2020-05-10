@@ -136,16 +136,18 @@
               <l-marker
                 v-for="customer in customers"
                 v-bind:key="customer.id"
-                :lat-lng="[customer.latitude, customer.longitude]"
+                :lat-lng.sync="customer.position"
                 :icon="iconCustomer()"
                 v-on:click="customerClick(customer)"
+                :draggable="true"
               ></l-marker>
               <l-marker
                 v-for="locker in lockers"
                 v-bind:key="locker.id"
-                :lat-lng="[locker.latitude, locker.longitude]"
+                :lat-lng.sync="locker.position"
                 :icon="iconLocker()"
                 v-on:click="lockerClick(locker)"
+                :draggable="true"
               ></l-marker>
               <l-marker :lat-lng.sync="deposito.position" :draggable="true">
               </l-marker>
@@ -201,12 +203,13 @@ export default {
       numberOfLockers_slider: 1,
       numberOfDays_slider: 1,
       // eslint-disable-next-line
-      customers: [], //[ { "id": 1, "latitude": -20.790452, "longitude": -42.856987, "day": 1}, { "id": 3, "latitude": -20.74617, "longitude": -42.84611, "day": 1}, { "id": 5, "latitude": -20.723942, "longitude": -42.896334, "day": 1 }, { "id": 6, "latitude": -20.736425, "longitude": -42.901754, "day": 1 }, { "id": 7, "latitude": -20.729555, "longitude": -42.853884, "day": 1 } ],
+      customers: [],
       // eslint-disable-next-line
-      lockers: [], //[ { "id": 2, "latitude": -20.745406, "longitude": -42.866753, "day": 1 }, { "id": 4, "latitude": -20.738825, "longitude": -42.856516, "day": 1 } ],
+      lockers: [],
       genId: 1,
       showPolygon: false,
       showPanel: true,
+      // eslint-disable-next-line
       distance: [],
       log: "",
       currentCliente: 0,
@@ -214,9 +217,8 @@ export default {
       lastRequest: new Date(),
       processingClientes: false,
       processingLockers: false,
-      deposito: {
-        position: { lat: -20.752327, lng: -42.876433 }
-      }
+      // eslint-disable-next-line
+      deposito: { "position": { "lat": -20.752327, "lng": -42.876433 } }//{ position: { lat: -20.752327, lng: -42.876433 }      
     };
   },
   created() {
@@ -290,8 +292,10 @@ export default {
           return (
             conjunto.push({
               id: this.genId++,
-              latitude: latlng[0],
-              longitude: latlng[1],
+              position: {
+                lat: latlng[0],
+                lng: latlng[1]
+              },
               day: _day
             }) - 1
           );
@@ -299,15 +303,17 @@ export default {
         .catch(err => {
           console.log(err);
         });
-    },    
+    },
     createLocker(conjunto) {
       return this.createCoordenada()
         .then(latlng => {
           return (
             conjunto.push({
               id: this.genId++,
-              latitude: latlng[0],
-              longitude: latlng[1]
+              position: {
+                lat: latlng[0],
+                lng: latlng[1]
+              }
             }) - 1
           );
         })
@@ -385,8 +391,8 @@ export default {
             "Content-Type": "application/json"
           },
           params: {
-            start: `${points[i].longitude},${points[i].latitude}`,
-            end: `${points[j].longitude},${points[j].latitude}`
+            start: `${points[i].position.lng},${points[i].position.lat}`,
+            end: `${points[j].position.lng},${points[j].position.lat}`
           }
         })
         .then(val => val.data.features[0].properties.segments[0].distance)
