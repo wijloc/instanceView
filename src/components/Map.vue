@@ -405,8 +405,10 @@ export default {
       let points = [
         {
           id: 0,
-          latitude: this.deposito.position.lat,
-          longitude: this.deposito.position.lng
+          position: {
+            latitude: this.deposito.position.lat,
+            longitude: this.deposito.position.lng
+          }
         }
       ];
       points = points.concat(this.customers);
