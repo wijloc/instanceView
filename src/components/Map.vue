@@ -28,11 +28,6 @@
             </v-list-item-title>
           </v-list-item>
           <v-list-item>
-            <v-list-item-title v-on:click="buildDistance">
-              Calcular Distâncias
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item>
             <v-list-item-title
               v-on:click="
                 () => {
@@ -40,6 +35,11 @@
                 }
               "
               >Pontos Aleatórios
+            </v-list-item-title>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-title v-on:click="getInstanceText">
+              Gerar Instância
             </v-list-item-title>
           </v-list-item>
         </v-list>
@@ -161,15 +161,12 @@
       </v-row>
       <v-row>
         <v-col cols="10" offset="1">
-          <p>{{ deposito }}</p>
-          <p>{{ customers }}</p>
-          <p>{{ lockers }}</p>
-          <p>{{ distance }}</p>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="10" offset="1">
-          <textarea v-model="log" style="width: 100%"></textarea>
+          <v-textarea
+            label="Instance:"
+            v-model="instance"
+            style="font-family:'monospace'"
+            :auto-grow="true"
+          ></v-textarea>
         </v-col>
       </v-row>
     </div>
@@ -209,24 +206,22 @@ export default {
       genId: 1,
       showPolygon: false,
       showPanel: true,
-      // eslint-disable-next-line
-      distance: [],
-      log: "",
       currentCliente: 0,
       rateLimit: 1500,
       lastRequest: new Date(),
       processingClientes: false,
       processingLockers: false,
       // eslint-disable-next-line
-      deposito: { "position": { "lat": -20.752327, "lng": -42.876433 } }//{ position: { lat: -20.752327, lng: -42.876433 }      
+      deposito: { "position": { "lat": -20.752327, "lng": -42.876433 } },//{ position: { lat: -20.752327, lng: -42.876433 }
+      instance: ""
     };
   },
   created() {
     this.setPolygon([
-      [-42.82791, -20.706786],
-      [-42.82791, -20.797868],
-      [-42.924957, -20.797868],
-      [-42.924957, -20.706786]
+      [-20.706786, -42.82791],
+      [-20.706786, -42.924957],
+      [-20.797868, -42.924957],
+      [-20.797868, -42.82791]
     ]);
   },
   methods: {
@@ -255,7 +250,6 @@ export default {
         //
       }
       this.lastRequest = new Date();
-      this.log += `Solicitação em: ${this.lastRequest}\n`;
     },
     validatePoint(latitude, longitude) {
       this.waitRateLimit();
@@ -339,15 +333,15 @@ export default {
       this.processingLockers = false;
     },
     calcMinMax() {
-      this.minLong = this.pointsOfPolygon[0][0];
+      this.minLong = this.pointsOfPolygon[0][1];
       this.maxLong = this.minLong;
-      this.minLat = this.pointsOfPolygon[0][1];
+      this.minLat = this.pointsOfPolygon[0][0];
       this.maxLat = this.minLat;
       for (let point of this.pointsOfPolygon) {
-        if (point[0] < this.minLong) this.minLong = point[0];
-        if (point[0] > this.maxLong) this.maxLong = point[0];
-        if (point[1] < this.minLat) this.minLat = point[1];
-        if (point[1] > this.maxLong) this.maxLat = point[1];
+        if (point[1] < this.minLong) this.minLong = point[1];
+        if (point[1] > this.maxLong) this.maxLong = point[1];
+        if (point[0] < this.minLat) this.minLat = point[0];
+        if (point[0] > this.maxLat) this.maxLat = point[0];
       }
     },
     centerMap() {
@@ -356,12 +350,13 @@ export default {
         (this.maxLong - this.minLong) / 2 + this.minLong
       ];
     },
-    drawRandomPoints() {
+    async drawRandomPoints() {
       this.numberOfCustomers = this.numberOfCustomers_slider;
       this.numberOfLockers = this.numberOfLockers_slider;
       this.numberOfDays = this.numberOfDays_slider;
       this.centerMap();
-      this.createInstance();
+      await this.createInstance();
+      this.getInstanceText();
     },
     iconCustomer() {
       return L.icon({
@@ -377,51 +372,6 @@ export default {
         iconAnchor: [20, 20]
       });
     },
-    getDistanceAtoB(points, i, j) {
-      this.waitRateLimit();
-      return axios
-        .create({
-          baseURL: "https://api.openrouteservice.org/v2/directions/driving-car"
-        })
-        .get("", {
-          method: "GET",
-          headers: {
-            Authorization:
-              "5b3ce3597851110001cf624858ffbe94f1f945c792d6183667844b71",
-            "Content-Type": "application/json"
-          },
-          params: {
-            start: `${points[i].position.lng},${points[i].position.lat}`,
-            end: `${points[j].position.lng},${points[j].position.lat}`
-          }
-        })
-        .then(val => val.data.features[0].properties.segments[0].distance)
-        .catch(err => {
-          console.log(err);
-          return this.getDistanceAtoB(points, i, j);
-        });
-    },
-    async buildDistance() {
-      let points = [
-        {
-          id: 0,
-          position: {
-            latitude: this.deposito.position.lat,
-            longitude: this.deposito.position.lng
-          }
-        }
-      ];
-      points = points.concat(this.customers);
-      points = points.concat(this.lockers);
-      this.distance = Array(points.length)
-        .fill()
-        .map(() => Array(points.length).fill(0));
-      for (let i = 0; i < points.length; i++)
-        for (let j = 0; j < points.length; j++)
-          await this.getDistanceAtoB(points, i, j).then(
-            distance => (this.distance[i][j] = distance || 0)
-          );
-    },
     customerClick(customer) {
       alert(
         `Cliente\nID: ${customer.id}\nLatitude: ${customer.latitude} \nLongitude: ${customer.longitude} \nDia: ${customer.day}`
@@ -431,6 +381,40 @@ export default {
       alert(
         `Locker\nID: ${locker.id}\nLatitude: ${locker.latitude} \nLongitude: ${locker.longitude}`
       );
+    },
+    getInstanceText() {
+      var output = "";
+      output = `#name\n`;
+      output += `instance\n`;
+      output += `\n`;
+      output += `#numDepots\n`;
+      output += `1\n`;
+      output += `\n`;
+      output += `#numDays\n`;
+      output += `${this.numberOfDays}\n`;
+      output += `\n`;
+      output += `#numLockers\n`;
+      output += `${this.numberOfLockers}\n`;
+      output += `\n`;
+      output += `#numMunicipalities\n`;
+      output += `${this.numberOfCustomers}\n`;
+      output += `\n`;
+      output += `#depots\n`;
+      output += `+----+------------------+--------+--------------+---------------+---------------+\n`;
+      output += `| id |       name       | region |   latitude   |   longitude   | # technicians |\n`;
+      output += `+----+------------------+--------+--------------+---------------+---------------+\n`;
+      output += `    0  DEPOT                   DM    ${this.deposito.position.lat}     ${this.deposito.position.lng}               1 \n`;
+      output += `\n#municipalities\n`;
+      output += `+----+---------------------------+--------------+---------------+\n`;
+      output += `| id |        city_name          |   latitude   |   longitude   |\n`;
+      output += `+----+---------------------------+--------------+---------------+\n`;
+      for (let i = 0; i < this.customers.length; i++) {
+        output += `${this.customers[i].id} CUSTOMER             ${this.customers[i].position.lat}     ${this.customers[i].position.lng}\n`;
+      }
+      for (let i = 0; i < this.lockers.length; i++) {
+        output += `${this.lockers[i].id} LOCKER               ${this.lockers[i].position.lat}     ${this.lockers[i].position.lng}\n`;
+      }
+      this.instance = output;
     }
   }
 };
