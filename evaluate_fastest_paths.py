@@ -181,7 +181,6 @@ while(index_line < num_lines):
 
 for i in range(0, num_depots):
     current_line = (" ".join(instance_file[index_line].split())).split(' ')
-    print(current_line[0], current_line[1])
     points.append(Point(len(points), current_line[3], current_line[4], True))
     index_line += 1
 
@@ -198,7 +197,6 @@ while(index_line < num_lines):
 current_cout = 1
 while(index_line < num_lines):
     current_line = (" ".join(instance_file[index_line].split())).split(' ')
-    print(current_line)
 
     # Check if it's a valid line
     if current_line[0].isdigit():
@@ -212,7 +210,7 @@ while(index_line < num_lines):
 
 # Safety check: Verify if there are as many points as expected
 print(Colors.cyan, '>> Found a total of ', len(points), ' points', Colors.none, sep='')
-print(points)
+
 if len(points) != num_municipalities + num_depots:
     print(Colors.yellow, "## Warning: A total of ", num_municipalities + num_depots, " were expected, but ", len(points), " were parsed!", Colors.none, sep="")
 
