@@ -1,5 +1,5 @@
 <template>
-  <v-app>    
+  <v-app>
     <v-content>
       <Map />
     </v-content>
