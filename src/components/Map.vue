@@ -397,7 +397,7 @@ export default {
       output += `${this.numberOfLockers}\n`;
       output += `\n`;
       output += `#numMunicipalities\n`;
-      output += `${this.numberOfCustomers}\n`;
+      output += `${this.customers.length}\n`;
       output += `\n`;
       output += `#depots\n`;
       output += `+----+------------------+--------+--------------+---------------+---------------+\n`;
