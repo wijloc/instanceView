@@ -98,13 +98,16 @@ def processTour(tour, osrm_client, distances, durations):
     list_coords = []
     for i in range(0, tour.size):
         list_coords.append([tour[i].lng, tour[i].lat])
+    #print(tour)
     
     # Get the fastest route between the points in the tour
     result = osrm_client.route(coordinates=list_coords, continue_straight=False)
 
     # Get the distances from the result
+    #print(result)
     for k in range(0, len(result['routes'][0]['legs'])):
         distances[tour[k].id][tour[k+1].id] = result['routes'][0]['legs'][k]['distance']
+        #print(math.ceil(distances[tour[k].id][tour[k+1].id] / 10) / 100)        
         durations[tour[k].id][tour[k+1].id] = result['routes'][0]['legs'][k]['duration']
 
 # --------------------------------------------------------------------
