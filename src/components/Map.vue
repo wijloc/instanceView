@@ -75,6 +75,19 @@
             :label="'Dias: ' + numberOfDays_slider"
           >
           </v-slider>
+          <v-range-slider
+            v-model="demandRange"
+            min="1"
+            max="1000"
+            :label="
+              'Random Demand Limits: ' +
+                this.demandRange[0] +
+                ' ' +
+                this.demandRange[1]
+            "
+          ></v-range-slider>
+          <v-checkbox v-model="withDayProperty" label="With Day Property" />
+          <v-checkbox v-model="withDemand" label="With Random Demand" />
           <v-btn depressed small color="primary" v-on:click="drawRandomPoints"
             >Gerar Pontos Aleatórios</v-btn
           >
@@ -213,7 +226,10 @@ export default {
       processingLockers: false,
       // eslint-disable-next-line
       deposito: { position: { lat: 45.455796, lng: 9.173155 } },
-      instance: ""
+      instance: "",
+      withDayProperty: false,
+      withDemand: true,
+      demandRange: [10, 50]
     };
   },
   created() {
@@ -401,9 +417,11 @@ export default {
       output += `#numDepots\n`;
       output += `1\n`;
       output += `\n`;
-      output += `#numDays\n`;
-      output += `${this.numberOfDays}\n`;
-      output += `\n`;
+      if (this.withDayProperty) {
+        output += `#numDays\n`;
+        output += `${this.numberOfDays}\n`;
+        output += `\n`;
+      }
       output += `#numLockers\n`;
       output += `${this.numberOfLockers}\n`;
       output += `\n`;
@@ -420,10 +438,14 @@ export default {
       output += `| id |        city_name          |   latitude   |   longitude   |\n`;
       output += `+----+---------------------------+--------------+---------------+\n`;
       for (let i = 0; i < this.customers.length; i++) {
-        output += `${this.customers[i].id} CUSTOMER             ${this.customers[i].position.lat}     ${this.customers[i].position.lng}\n`;
+        output += `${this.customers[i].id} CUSTOMER ${this.customers[i].position.lat} ${this.customers[i].position.lng}`;
+        if (this.customers[i].demand) {
+          output += ` ${this.customers[i].demand}`;
+        }
+        output += `\n`;
       }
       for (let i = 0; i < this.lockers.length; i++) {
-        output += `${this.lockers[i].id} LOCKER               ${this.lockers[i].position.lat}     ${this.lockers[i].position.lng}\n`;
+        output += `${this.lockers[i].id} LOCKER ${this.lockers[i].position.lat} ${this.lockers[i].position.lng}\n`;
       }
       this.instance = output;
     },
