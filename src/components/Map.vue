@@ -315,16 +315,28 @@ export default {
     createCustomer(conjunto, _day) {
       return this.createCoordenada()
         .then(latlng => {
-          return (
-            conjunto.push({
-              id: this.genId++,
-              position: {
-                lat: latlng[0],
-                lng: latlng[1]
-              },
-              day: _day
-            }) - 1
-          );
+          let customer = {
+            id: this.genId++,
+            position: {
+              lat: latlng[0],
+              lng: latlng[1]
+            }
+          };
+
+          if (this.withDayProperty) {
+            customer = { ...customer, day: _day };
+          }
+
+          if (this.withDemand) {
+            const demand = Math.floor(
+              Math.floor(
+                Math.random() * (this.demandRange[1] - this.demandRange[0])
+              ) + this.demandRange[0]
+            );
+            customer = { ...customer, demand };
+          }
+
+          return conjunto.push(customer) - 1;
         })
         .catch(err => {
           console.log(err);
