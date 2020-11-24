@@ -247,7 +247,7 @@ export default {
       [-20.797868, -42.924957],
       [-20.797868, -42.82791]
     ]);
-    this.loadInstance();
+    //this.loadInstance();
     //Milan Polygon:
     /*this.setPolygon([
       [45.498647, 9.147663],
