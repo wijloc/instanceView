@@ -553,6 +553,9 @@ export default {
         { id: 79, position: { lat: -20.749308, lng: -42.889199 }, day: 1 },
         { id: 80, position: { lat: -20.744994, lng: -42.863478 }, day: 1 }
       ];
+      this.numberOfLockers = this.lockers.length;
+      this.numberOfCustomers = this.customers.length;
+      this.numberOfDays = 1;
     }
   }
 };
