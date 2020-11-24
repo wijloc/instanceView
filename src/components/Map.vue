@@ -172,6 +172,13 @@
           </div>
         </v-col>
       </v-row>
+      <v-row class="text-center">
+        <v-col cols="10" offset="1">
+          <v-btn depressed small color="primary" v-on:click="getInstanceText"
+            >Imprimir Instância</v-btn
+          >
+        </v-col>
+      </v-row>
       <v-row>
         <v-col cols="10" offset="1">
           <v-textarea
