@@ -232,7 +232,12 @@ export default {
       processingClientes: false,
       processingLockers: false,
       // eslint-disable-next-line
-      deposito: { position: { lat: 45.455796, lng: 9.173155 } },
+      
+      //milan deposit
+      //deposito: { position: { lat: 45.455796, lng: 9.173155 } },
+
+      //vicosa deposit
+      deposito: { position: { lat: -20.752327, lng: -42.876433 } },
       instance: "",
       withDayProperty: false,
       withDemand: true,
