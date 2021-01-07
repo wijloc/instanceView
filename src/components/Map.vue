@@ -150,10 +150,12 @@
                 v-for="customer in customers"
                 v-bind:key="customer.id"
                 :lat-lng.sync="customer.position"
-                :icon="iconCustomer()"
+                :icon="iconCustomer(customer.id)"
                 v-on:click="customerClick(customer)"
                 :draggable="true"
-              ></l-marker>
+              >
+                <l-tooltip :content="customer.id.toString()"></l-tooltip>
+              </l-marker>
               <l-marker
                 v-for="locker in lockers"
                 v-bind:key="locker.id"
@@ -194,7 +196,7 @@
 </template>
 <script>
 import L from "leaflet";
-import { LMap, LTileLayer, LMarker, LPolygon } from "vue2-leaflet";
+import { LMap, LTileLayer, LMarker, LPolygon, LTooltip } from "vue2-leaflet";
 import axios from "axios";
 
 export default {
@@ -203,7 +205,8 @@ export default {
     LMap,
     LTileLayer,
     LMarker,
-    LPolygon
+    LPolygon,
+    LTooltip
   },
   data() {
     return {
