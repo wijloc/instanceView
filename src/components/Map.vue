@@ -51,7 +51,7 @@
           <v-slider
             v-model="numberOfCustomers_slider"
             class="align-center"
-            max="200"
+            max="500"
             min="1"
             hide-details
             :label="'Clientes: ' + numberOfCustomers_slider"
@@ -60,7 +60,7 @@
           <v-slider
             v-model="numberOfLockers_slider"
             class="align-center"
-            max="20"
+            max="50"
             min="1"
             hide-details
             :label="'Lockers: ' + numberOfLockers_slider"
