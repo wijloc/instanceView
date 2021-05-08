@@ -163,7 +163,9 @@
                 :icon="iconLocker()"
                 v-on:click="lockerClick(locker)"
                 :draggable="true"
-              ></l-marker>
+              >
+                <l-tooltip :content="locker.id.toString()"></l-tooltip>
+              </l-marker>
               <l-marker :lat-lng.sync="deposito.position" :draggable="true">
               </l-marker>
               <l-polygon
