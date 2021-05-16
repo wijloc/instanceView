@@ -54,7 +54,7 @@
             max="500"
             min="1"
             hide-details
-            :label="'Clientes: ' + numberOfCustomers_slider"
+            :label="'Customers: ' + numberOfCustomers_slider"
           >
           </v-slider>
           <v-slider
@@ -111,7 +111,7 @@
                     width="2"
                   ></v-progress-circular>
                 </span>
-                Clientes:
+                Customers:
                 {{
                   customers.length === numberOfCustomers * numberOfDays
                     ? customers.length
@@ -160,7 +160,7 @@
                 v-for="locker in lockers"
                 v-bind:key="locker.id"
                 :lat-lng.sync="locker.position"
-                :icon="iconLocker()"
+                :icon="iconLocker(locker.id)"
                 v-on:click="lockerClick(locker)"
                 :draggable="true"
               >
@@ -412,14 +412,28 @@ export default {
       await this.createInstance();
       this.getInstanceText();
     },
-    iconCustomer() {
+    iconCustomer(id) {
+      if (id && [].includes(id)) {
+        return L.icon({
+          iconUrl: require("../assets/alert-triangle.svg"),
+          iconSize: [30, 30],
+          iconAnchor: [20, 20]
+        });
+      }
       return L.icon({
         iconUrl: require("../assets/customer.png"),
         iconSize: [30, 30],
         iconAnchor: [20, 20]
       });
     },
-    iconLocker() {
+    iconLocker(id) {
+      if (id && [].includes(id)) {
+        return L.icon({
+          iconUrl: require("../assets/alert-triangle.svg"),
+          iconSize: [30, 30],
+          iconAnchor: [20, 20]
+        });
+      }
       return L.icon({
         iconUrl: require("../assets/locker.png"),
         iconSize: [30, 30],
