@@ -136,7 +136,7 @@
               </p>
             </v-card-text>
           </v-card>
-          <div style="height: 600px">
+          <div style="height: 910px">
             <l-map
               style="height: 100%; width: 100%; z-index: 0"
               :zoom="zoom"
@@ -172,6 +172,27 @@
                 :visible="showPolygon"
                 :lat-lngs="pointsOfPolygon"
               ></l-polygon>
+              <l-polyline
+                v-for="lockerLine in lockerLines"
+                v-bind:key="lockerLine.id"
+                :lat-lngs="lockerLine.latlngs"
+                dashArray="5, 5"
+                color="green"
+              ></l-polyline>
+
+              <l-polyline
+                v-for="homeDeliveryLine in homeDeliveryLines"
+                v-bind:key="homeDeliveryLine.id"
+                :lat-lngs="homeDeliveryLine.latlngs"
+                color="black"
+              ></l-polyline>
+
+              <l-polyline
+                v-for="supplyLine in supplyLines"
+                v-bind:key="supplyLine.id"
+                :lat-lngs="supplyLine.latlngs"
+                color="red"
+              ></l-polyline>
             </l-map>
           </div>
         </v-col>
@@ -198,7 +219,14 @@
 </template>
 <script>
 import L from "leaflet";
-import { LMap, LTileLayer, LMarker, LPolygon, LTooltip } from "vue2-leaflet";
+import {
+  LMap,
+  LTileLayer,
+  LMarker,
+  LPolygon,
+  LTooltip,
+  LPolyline
+} from "vue2-leaflet";
 import axios from "axios";
 
 export default {
@@ -208,7 +236,8 @@ export default {
     LTileLayer,
     LMarker,
     LPolygon,
-    LTooltip
+    LTooltip,
+    LPolyline
   },
   data() {
     return {
@@ -246,7 +275,106 @@ export default {
       instance: "",
       withDayProperty: false,
       withDemand: true,
-      demandRange: [10, 50]
+      demandRange: [10, 50],
+      solution: [
+        76,
+        74,
+        26,
+        49,
+        39,
+        25,
+        40,
+        28,
+        78,
+        73,
+        72,
+        13,
+        3,
+        6,
+        52,
+        57,
+        7,
+        65,
+        11,
+        64,
+        37,
+        21,
+        33,
+        69,
+        29,
+        54,
+        35,
+        80,
+        10,
+        34,
+        71,
+        53,
+        8,
+        0,
+        1,
+        24,
+        62,
+        51,
+        27,
+        14,
+        59,
+        0,
+        2,
+        22,
+        55,
+        42,
+        67,
+        16,
+        9,
+        56,
+        46,
+        0,
+        4,
+        66,
+        0,
+        5,
+        23,
+        58,
+        47,
+        30,
+        36,
+        38,
+        32,
+        31,
+        60,
+        15,
+        17,
+        0,
+        18,
+        0,
+        19,
+        0,
+        20,
+        0,
+        43,
+        70,
+        0,
+        44,
+        48,
+        0,
+        50,
+        41,
+        12,
+        68,
+        45,
+        75,
+        0,
+        63,
+        61,
+        -1,
+        76,
+        78,
+        80
+      ],
+      lockerLines: [],
+      homeDeliveryLines: [],
+      supplyLines: [],
+      iconSize: 16
     };
   },
   created() {
@@ -257,7 +385,7 @@ export default {
       [-20.797868, -42.924957],
       [-20.797868, -42.82791]
     ]);
-    //this.loadInstance();
+    this.loadInstance();
     //Milan Polygon:
     /*this.setPolygon([
       [45.498647, 9.147663],
@@ -265,6 +393,11 @@ export default {
       [45.438815, 9.228516],
       [45.438815, 9.147663]
     ]);*/
+  },
+  mounted() {
+    this.printLockersAllocation();
+    this.printHomeDeliveryRoutes();
+    this.printSupplyRoutes();
   },
   methods: {
     setPolygon(points) {
@@ -416,28 +549,28 @@ export default {
       if (id && [].includes(id)) {
         return L.icon({
           iconUrl: require("../assets/alert-triangle.svg"),
-          iconSize: [30, 30],
-          iconAnchor: [20, 20]
+          iconSize: [this.iconSize, this.iconSize],
+          iconAnchor: [this.iconSize / 2, this.iconSize]
         });
       }
       return L.icon({
         iconUrl: require("../assets/customer.png"),
-        iconSize: [30, 30],
-        iconAnchor: [20, 20]
+        iconSize: [this.iconSize, this.iconSize],
+        iconAnchor: [this.iconSize / 2, this.iconSize]
       });
     },
     iconLocker(id) {
       if (id && [].includes(id)) {
         return L.icon({
           iconUrl: require("../assets/alert-triangle.svg"),
-          iconSize: [30, 30],
-          iconAnchor: [20, 20]
+          iconSize: [this.iconSize, this.iconSize],
+          iconAnchor: [this.iconSize / 2, this.iconSize]
         });
       }
       return L.icon({
         iconUrl: require("../assets/locker.png"),
-        iconSize: [30, 30],
-        iconAnchor: [20, 20]
+        iconSize: [this.iconSize, this.iconSize],
+        iconAnchor: [this.iconSize / 2, this.iconSize]
       });
     },
     customerClick(customer) {
@@ -514,60 +647,136 @@ export default {
         { id: 14, position: { lat: -20.731836, lng: -42.909953 }, day: 1 },
         { id: 15, position: { lat: -20.775965, lng: -42.86444 }, day: 1 },
         { id: 16, position: { lat: -20.716122, lng: -42.871662 }, day: 1 },
-        { id: 17, position: { lat: -20.777455, lng: -42.833024 }, day: 1 },
+        {
+          id: 17,
+          position: { lat: -20.7575585488231, lng: -42.8609272565682 },
+          day: 1
+        },
         { id: 18, position: { lat: -20.747153, lng: -42.86362 }, day: 1 },
         { id: 19, position: { lat: -20.757167, lng: -42.887067 }, day: 1 },
-        { id: 20, position: { lat: -20.790603, lng: -42.870907 }, day: 1 },
-        { id: 21, position: { lat: -20.791572, lng: -42.90793 }, day: 1 },
-        { id: 22, position: { lat: -20.732011, lng: -42.831552 }, day: 1 },
-        { id: 23, position: { lat: -20.754001, lng: -42.83125 }, day: 1 },
+        {
+          id: 20,
+          position: { lat: -20.7538665765606, lng: -42.8813585920367 },
+          day: 1
+        },
+        {
+          id: 21,
+          position: { lat: -20.7744120592092, lng: -42.8913063878022 },
+          day: 1
+        },
+        {
+          id: 22,
+          position: { lat: -20.7310706648715, lng: -42.846341026217 },
+          day: 1
+        },
+        {
+          id: 23,
+          position: { lat: -20.756916473167, lng: -42.8458219226467 },
+          day: 1
+        },
         { id: 24, position: { lat: -20.762831, lng: -42.92287 }, day: 1 },
         { id: 25, position: { lat: -20.745941, lng: -42.881009 }, day: 1 },
         { id: 26, position: { lat: -20.762127, lng: -42.868338 }, day: 1 },
         { id: 27, position: { lat: -20.733917, lng: -42.918125 }, day: 1 },
-        { id: 28, position: { lat: -20.786103, lng: -42.869363 }, day: 1 },
+        {
+          id: 28,
+          position: { lat: -20.7488902973929, lng: -42.867965264617 },
+          day: 1
+        },
         { id: 29, position: { lat: -20.755241, lng: -42.908278 }, day: 1 },
         { id: 30, position: { lat: -20.764688, lng: -42.843856 }, day: 1 },
         { id: 31, position: { lat: -20.767685, lng: -42.854303 }, day: 1 },
         { id: 32, position: { lat: -20.764799, lng: -42.851068 }, day: 1 },
-        { id: 33, position: { lat: -20.791047, lng: -42.899753 }, day: 1 },
+        {
+          id: 33,
+          position: { lat: -20.7720045299667, lng: -42.9007533464591 },
+          day: 1
+        },
         { id: 34, position: { lat: -20.720199, lng: -42.863587 }, day: 1 },
         { id: 35, position: { lat: -20.770436, lng: -42.887853 }, day: 1 },
         { id: 36, position: { lat: -20.766384, lng: -42.848325 }, day: 1 },
-        { id: 37, position: { lat: -20.797222, lng: -42.897611 }, day: 1 },
+        {
+          id: 37,
+          position: { lat: -20.7644606898756, lng: -42.8871915014452 },
+          day: 1
+        },
         { id: 38, position: { lat: -20.764459, lng: -42.849685 }, day: 1 },
         { id: 39, position: { lat: -20.770394, lng: -42.879163 }, day: 1 },
         { id: 40, position: { lat: -20.748909, lng: -42.883271 }, day: 1 },
         { id: 41, position: { lat: -20.732516, lng: -42.893075 }, day: 1 },
         { id: 42, position: { lat: -20.709688, lng: -42.864453 }, day: 1 },
-        { id: 43, position: { lat: -20.794318, lng: -42.85068 }, day: 1 },
+        {
+          id: 43,
+          position: { lat: -20.7334788459458, lng: -42.8605847468616 },
+          day: 1
+        },
         { id: 44, position: { lat: -20.740765, lng: -42.841317 }, day: 1 },
         { id: 45, position: { lat: -20.734285, lng: -42.901262 }, day: 1 },
-        { id: 46, position: { lat: -20.783761, lng: -42.878386 }, day: 1 },
+        {
+          id: 46,
+          position: { lat: -20.7334788459458, lng: -42.8755178773746 },
+          day: 1
+        },
         { id: 47, position: { lat: -20.76937, lng: -42.842306 }, day: 1 },
         { id: 48, position: { lat: -20.738635, lng: -42.845423 }, day: 1 },
         { id: 49, position: { lat: -20.74554, lng: -42.870786 }, day: 1 },
-        { id: 50, position: { lat: -20.707989, lng: -42.906675 }, day: 1 },
+        {
+          id: 50,
+          position: { lat: -20.7321944874739, lng: -42.8880442254055 },
+          day: 1
+        },
         { id: 51, position: { lat: -20.744827, lng: -42.924312 }, day: 1 },
-        { id: 52, position: { lat: -20.788826, lng: -42.879109 }, day: 1 },
-        { id: 53, position: { lat: -20.793696, lng: -42.853454 }, day: 1 },
+        {
+          id: 52,
+          position: { lat: -20.7634976193491, lng: -42.8794671189044 },
+          day: 1
+        },
+        {
+          id: 53,
+          position: { lat: -20.7329972127959, lng: -42.8652228562283 },
+          day: 1
+        },
         { id: 54, position: { lat: -20.759505, lng: -42.891687 }, day: 1 },
-        { id: 55, position: { lat: -20.719754, lng: -42.840425 }, day: 1 },
+        {
+          id: 55,
+          position: { lat: -20.726896393592, lng: -42.8538936931778 },
+          day: 1
+        },
         { id: 56, position: { lat: -20.725735, lng: -42.880585 }, day: 1 },
         { id: 57, position: { lat: -20.777647, lng: -42.899811 }, day: 1 },
         { id: 58, position: { lat: -20.7593, lng: -42.837838 }, day: 1 },
         { id: 59, position: { lat: -20.741087, lng: -42.906947 }, day: 1 },
         { id: 60, position: { lat: -20.779731, lng: -42.863335 }, day: 1 },
-        { id: 61, position: { lat: -20.707248, lng: -42.886961 }, day: 1 },
+        {
+          id: 61,
+          position: { lat: -20.7333183017328, lng: -42.8779191853385 },
+          day: 1
+        },
         { id: 62, position: { lat: -20.747851, lng: -42.922423 }, day: 1 },
-        { id: 63, position: { lat: -20.717533, lng: -42.890579 }, day: 1 },
+        {
+          id: 63,
+          position: { lat: -20.7379740147707, lng: -42.8806673934643 },
+          day: 1
+        },
         { id: 64, position: { lat: -20.777619, lng: -42.904008 }, day: 1 },
         { id: 65, position: { lat: -20.772647, lng: -42.882844 }, day: 1 },
-        { id: 66, position: { lat: -20.711953, lng: -42.90463 }, day: 1 },
+        {
+          id: 66,
+          position: { lat: -20.7296257378377, lng: -42.8770550245135 },
+          day: 1
+        },
         { id: 67, position: { lat: -20.715389, lng: -42.865307 }, day: 1 },
         { id: 68, position: { lat: -20.737101, lng: -42.893272 }, day: 1 },
-        { id: 69, position: { lat: -20.792486, lng: -42.894816 }, day: 1 },
-        { id: 70, position: { lat: -20.793798, lng: -42.864851 }, day: 1 },
+        {
+          id: 69,
+          position: { lat: -20.7663868125152, lng: -42.8918257081851 },
+          day: 1
+        },
+        {
+          id: 70,
+          position: { lat: -20.7346026506688, lng: -42.8679666738989 },
+          day: 1
+        },
         { id: 71, position: { lat: -20.750521, lng: -42.875487 }, day: 1 },
         { id: 72, position: { lat: -20.774273, lng: -42.906006 }, day: 1 },
         { id: 73, position: { lat: -20.764686, lng: -42.900156 }, day: 1 },
@@ -577,21 +786,126 @@ export default {
       this.lockers = [
         {
           id: 76,
-          position: { lat: -20.725772531661, lng: -42.8774070739746 },
-          day: 1
+          position: { lat: -20.7586821746589, lng: -42.8822137009356 }
         },
-        { id: 77, position: { lat: -20.764141, lng: -42.854886 }, day: 1 },
+        {
+          id: 77,
+          position: { lat: -20.763176594476363, lng: -42.85440407004084 }
+        },
         {
           id: 78,
-          position: { lat: -20.7705599940022, lng: -42.8950881958008 },
-          day: 1
+          position: { lat: -20.7705599940022, lng: -42.8950881958008 }
         },
-        { id: 79, position: { lat: -20.749308, lng: -42.889199 }, day: 1 },
-        { id: 80, position: { lat: -20.744994, lng: -42.863478 }, day: 1 }
+        {
+          id: 79,
+          position: { lat: -20.732515578113524, lng: -42.88341337926087 }
+        },
+        { id: 80, position: { lat: -20.744994, lng: -42.863478 } }
       ];
       this.numberOfLockers = this.lockers.length;
       this.numberOfCustomers = this.customers.length;
       this.numberOfDays = 1;
+    },
+    printLockersAllocation() {
+      let i = 0;
+      while (i < this.solution.length) {
+        if (this.solution[i] == 0) return;
+        if (this.isLocker(this.solution[i])) {
+          let locker = this.lockers[
+            this.solution[i] - this.customers.length - 1
+          ];
+          i++;
+          while (this.isCustomer(this.solution[i])) {
+            let newLockerLines = this.lockerLines;
+            newLockerLines.push({
+              id: this.lockerLines.length,
+              latlngs: [
+                locker.position,
+                this.customers[this.solution[i] - 1].position
+              ]
+            });
+            this.lockerLines = newLockerLines;
+            i++;
+          }
+        } else {
+          i++;
+        }
+      }
+    },
+    isLocker(value) {
+      return value > this.customers.length;
+    },
+    isCustomer(value) {
+      return value > 0 && value <= this.customers.length;
+    },
+    printHomeDeliveryRoutes() {
+      let i = 0;
+      while (i < this.solution.length) {
+        if (this.solution[i] == 0) {
+          let color = this.getRandomColor();
+          let start = this.deposito;
+          i++;
+          while (this.isCustomer(this.solution[i])) {
+            let current = this.customers[this.solution[i] - 1];
+            let newHomeDeliveryLines = this.homeDeliveryLines;
+            newHomeDeliveryLines.push({
+              id: this.homeDeliveryLines.length,
+              latlngs: [start.position, current.position],
+              color: color
+            });
+            this.homeDeliveryLines = newHomeDeliveryLines;
+            start = current;
+            i++;
+          }
+          let newHomeDeliveryLines = this.homeDeliveryLines;
+          newHomeDeliveryLines.push({
+            id: this.homeDeliveryLines.length,
+            latlngs: [start.position, this.deposito.position],
+            color: color
+          });
+          this.homeDeliveryLines = newHomeDeliveryLines;
+        } else {
+          i++;
+        }
+      }
+    },
+    getRandomColor() {
+      var letters = "0123456789ABCDEF";
+      var color = "#";
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    },
+    printSupplyRoutes() {
+      let i = 0;
+      while (i < this.solution.length) {
+        if (this.solution[i] == -1) {
+          let start = this.deposito;
+          i++;
+          while (this.isLocker(this.solution[i])) {
+            let current = this.lockers[
+              this.solution[i] - this.customers.length - 1
+            ];
+            let newSupplyLines = this.supplyLines;
+            newSupplyLines.push({
+              id: this.supplyLines.length,
+              latlngs: [start.position, current.position]
+            });
+            this.supplyLines = newSupplyLines;
+            start = current;
+            i++;
+          }
+          let newsupplyLines = this.supplyLines;
+          newsupplyLines.push({
+            id: this.supplyLines.length,
+            latlngs: [start.position, this.deposito.position]
+          });
+          this.supplyLines = newsupplyLines;
+        } else {
+          i++;
+        }
+      }
     }
   }
 };
